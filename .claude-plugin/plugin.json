@@ -4,5 +4,42 @@
   "description": "Shapes and reorders Persian/Arabic/Hebrew text in the transcript through fribidi so Ghostty draws it joined, right-to-left and right-aligned.",
   "author": {
     "name": "Ali Irani"
+  },
+  "userConfig": {
+    "alignment": {
+      "title": "Alignment",
+      "type": "string",
+      "description": "auto: right-align RTL paragraphs; left: shape only; right: always right-align",
+      "default": "auto",
+      "options": [
+        "auto",
+        "left",
+        "right"
+      ]
+    },
+    "fribidiPath": {
+      "title": "fribidi path",
+      "type": "string",
+      "description": "Path to the fribidi binary",
+      "default": "fribidi"
+    },
+    "margin": {
+      "title": "Right margin (cells)",
+      "type": "number",
+      "description": "Cells subtracted from viewport.columns before wrapping; keep it >= 1, it is the slack that stops wrap:truncate-end cutting the start of a right-aligned RTL line",
+      "default": 4
+    },
+    "cacheSize": {
+      "title": "Shape cache size",
+      "type": "number",
+      "description": "LRU entries of shaped messages",
+      "default": 256
+    },
+    "timeoutMs": {
+      "title": "fribidi timeout (ms)",
+      "type": "number",
+      "description": "Milliseconds a fribidi call may take before it is killed and the row falls back to the engine's own drawing",
+      "default": 2000
+    }
   }
 }
