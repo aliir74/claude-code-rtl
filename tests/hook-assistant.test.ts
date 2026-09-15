@@ -113,8 +113,19 @@ describe('hook-assistant', () => {
     expect(stringsOf(tree).includes(sentinel)).toBe(true)
   })
 
-  test('a Persian user message is shaped too', async ($, on) => {
+  test('a Persian user message is handed back to the engine, shaped', async ($, on) => {
     fakeFribidi(on)
+
+    // The engine's own row is what draws the background band and the prompt
+    // marker, so the hook must pass the row on rather than draw its own tree.
+    // Standing in for the engine here lets the test read the text it received.
+    let seen = ''
+    on('ui.render', { component: 'UserMessage' }, ($$, e, next) => {
+      void next
+      seen = (e.props as { text: string }).text
+      const { Text } = $$.ui.resolve(e)
+      return Text({ children: ['ENGINE-ROW'] })
+    })
 
     const tree = await $.ui.render({
       surface: 'terminal',
@@ -124,8 +135,30 @@ describe('hook-assistant', () => {
       props: { text: 'سلام دنیا', origin: { kind: 'composer' } },
     })
 
-    expect(tree).toMatchObject({ type: 'Box' })
-    expect(stringsOf(tree).some(s => s.includes(reverse('سلام دنیا')))).toBe(true)
+    expect(stringsOf(tree).includes('ENGINE-ROW')).toBe(true)
+    expect(seen.includes(reverse('سلام دنیا'))).toBe(true)
+  })
+
+  test('an all-Latin user message reaches the engine untouched', async ($, on) => {
+    fakeFribidi(on)
+
+    let seen = ''
+    on('ui.render', { component: 'UserMessage' }, ($$, e, next) => {
+      void next
+      seen = (e.props as { text: string }).text
+      const { Text } = $$.ui.resolve(e)
+      return Text({ children: ['ENGINE-ROW'] })
+    })
+
+    await $.ui.render({
+      surface: 'terminal',
+      component: 'UserMessage',
+      requestId: 'r5b',
+      viewport: { columns: 40, rows: 20 },
+      props: { text: 'just english here', origin: { kind: 'composer' } },
+    })
+
+    expect(seen).toBe('just english here')
   })
 
   test('a non-Bash ToolResult is never touched', async ($, on) => {

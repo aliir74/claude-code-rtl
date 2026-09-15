@@ -110,8 +110,17 @@ export function splitPrefix(line: string): PrefixSplit {
 /** A body with its unshapeable runs lifted out. */
 export type ProtectedBody = { text: string; tokens: string[] }
 
-/** Inline code spans and bare URLs: text fribidi must never see. */
-const TOKEN = /(`[^`\n]+`)|(https?:\/\/[^\s<>()\]]+)/g
+/**
+ * Runs fribidi must never see.
+ *
+ * Inline code and URLs have to come back byte-identical. Emphasis spans are
+ * here for a different reason: `*` and `_` are neutral characters, so bidi
+ * moves each marker independently of the words it wraps and a reply comes out
+ * with stray `**` at the wrong ends. Protecting the whole span keeps every
+ * marker attached to its own text.
+ */
+const TOKEN =
+  /(`[^`\n]+`)|(https?:\/\/[^\s<>()\]]+)|(\*\*[^*\n]+\*\*)|(__[^_\n]+__)|(\*[^*\n]+\*)/g
 
 const OPEN = String.fromCharCode(0xe000)
 const CLOSE = String.fromCharCode(0xe001)

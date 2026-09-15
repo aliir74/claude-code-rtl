@@ -89,12 +89,28 @@ describe('render-tree', () => {
           { kind: 'text', text: 'beta' },
         ],
         fakeTable(),
-        { first: 'B ', rest: '  ' },
+        { first: 'B ', rest: '  ', side: 'left' },
       ),
     )
     const rows = tree['children'] as unknown as Record<string, unknown>[]
     expect((rows[0]?.['children'] as string[])[0]).toBe('B alpha')
     expect((rows[1]?.['children'] as string[])[0]).toBe('  beta')
+  })
+
+  test('a right-side gutter puts the marker at the end of the line', () => {
+    const tree = asAny(
+      treeOf(
+        [
+          { kind: 'text', text: 'alpha' },
+          { kind: 'text', text: 'beta' },
+        ],
+        fakeTable(),
+        { first: ' B', rest: '  ', side: 'right' },
+      ),
+    )
+    const rows = tree['children'] as unknown as Record<string, unknown>[]
+    expect((rows[0]?.['children'] as string[])[0]).toBe('alpha B')
+    expect((rows[1]?.['children'] as string[])[0]).toBe('beta  ')
   })
 
   test('every Text prop is in the allowlist', () => {

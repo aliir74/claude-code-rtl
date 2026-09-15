@@ -13,6 +13,7 @@ import { fribidiArgv, packStdin, unpackStdout } from './fribidi-args'
 import { LruCache } from './lru-cache'
 import type { Settings } from './options'
 import { settingsOf } from './options'
+import { baseDirection } from './rtl-detect'
 import type { Gutter } from './render-tree'
 import { treeOf } from './render-tree'
 import type { RenderLine, Shaper } from './transform'
@@ -159,17 +160,70 @@ async function draw(
 /**
  * The reply marker, drawn only on the block that opens a reply.
  *
- * Confirmed by the interactive smoke test: returning an own tree replaces the
- * engine's entire row, so the marker it used to draw disappears and successive
- * replies run together. Set `replyBullet` to an empty string to turn it off.
+ * Returning our own tree replaces the engine's entire row, marker included, so
+ * successive replies run together unless we draw it ourselves. It sits on the
+ * edge the text starts from: on the right for a right-aligned RTL reply, where
+ * a left-hand marker would sit at the END of the sentence and read as noise.
+ * Set `replyBullet` to an empty string to turn it off.
  */
-function gutterFor(settings: Settings, isFirstOfReply: boolean): Gutter | undefined {
+function gutterFor(settings: Settings, isFirstOfReply: boolean, dir: 'rtl' | 'ltr'): Gutter | undefined {
   if (settings.replyBullet === '') return undefined
 
-  const first = isFirstOfReply ? settings.replyBullet + ' ' : ''
-  const width = cellWidth(settings.replyBullet + ' ')
+  const right = settings.alignment === 'right' || (settings.alignment === 'auto' && dir === 'rtl')
+  const mark = right ? ' ' + settings.replyBullet : settings.replyBullet + ' '
+  const width = cellWidth(mark)
 
-  return { first: first === '' ? ' '.repeat(width) : first, rest: ' '.repeat(width) }
+  return {
+    first: isFirstOfReply ? mark : ' '.repeat(width),
+    rest: ' '.repeat(width),
+    side: right ? 'right' : 'left',
+  }
+}
+
+/** The shaped lines as one string, for handing back to the engine's own row. */
+function shapedTextOf(lines: RenderLine[]): string {
+  return lines.map(line => (line.kind === 'code' ? line.source : line.text)).join('\n')
+}
+
+/**
+ * Shapes the text and hands it back through `next`, so the ENGINE draws the
+ * row.
+ *
+ * Used where the engine's own styling is the point: a user message carries a
+ * background band and a prompt marker that an own tree would throw away. The
+ * cost is that the engine may re-wrap, so the text is shaped to a width with
+ * room to spare and every line comes back shorter than the engine's own limit.
+ */
+async function rewrite(
+  $: EngineInterface,
+  ctx: Context,
+  e: TerminalRender,
+  next: Next,
+  text: string,
+  markdown: boolean,
+): Promise<RenderElement> {
+  if (ctx.disabled || e.surface !== 'terminal' || !e.viewport) return next(e)
+  if (!(await (ctx.probed ??= probe($, ctx)))) return next(e)
+
+  // Extra slack beyond `margin`: the engine indents its own row, and a line
+  // that overflows would be re-wrapped, which is what undoes the bidi order.
+  const width = Math.max(1, e.viewport.columns - ctx.settings.margin - 4)
+  const key = ['rw', String(markdown), String(width), text].join(KEY_SEPARATOR)
+
+  let lines = ctx.cache.get(key)
+
+  if (lines === undefined) {
+    const shaped = await transformText(
+      text,
+      { columns: width, alignment: ctx.settings.alignment, markdown },
+      shaperOf($, ctx),
+    )
+    if (shaped === null) return next(e)
+    ctx.cache.set(key, shaped)
+    lines = shaped
+  }
+
+  return next({ ...e, props: { ...e.props, text: shapedTextOf(lines) } } as TerminalRender)
 }
 
 export function register(on: On, options: PluginOptions): void {
@@ -191,12 +245,14 @@ export function register(on: On, options: PluginOptions): void {
       next as Next,
       e.props.text,
       true,
-      gutterFor(ctx.settings, e.props.isFirstOfReply),
+      gutterFor(ctx.settings, e.props.isFirstOfReply, baseDirection(e.props.text)),
     ),
   ).catch(($, e, next) => next(e))
 
+  // A user row is handed back to the engine rather than drawn here: it carries
+  // a background band and a prompt marker that an own tree would discard.
   on('ui.render', { component: 'UserMessage' }, async ($, e, next) =>
-    draw($, ctx, e as TerminalRender, next as Next, e.props.text, true),
+    rewrite($, ctx, e as TerminalRender, next as Next, e.props.text, true),
   ).catch(($, e, next) => next(e))
 
   on('ui.render', { component: 'CommandOutput' }, async ($, e, next) =>

@@ -15,14 +15,18 @@ export type DrawTable = Pick<Elements['terminal'], 'Box' | 'Text' | 'Code'>
 const CODE_CAP = 10000
 
 /**
- * The marker column drawn to the left of a reply.
+ * The marker column drawn beside a reply.
  *
  * Returning our own tree replaces the engine's whole row, bullet included, so
  * a reply loses the marker that separates it from the one before unless we
  * draw it ourselves. `first` goes on the opening line, `rest` keeps every
- * later line aligned under it, so both must be the same cell width.
+ * later line aligned with it, so both must be the same cell width.
+ *
+ * `side` is which edge it sits on. For right-to-left text the line begins at
+ * the RIGHT edge, so a marker on the left sits at the end of the sentence,
+ * which reads as nothing at all; RTL replies put it on the right.
  */
-export type Gutter = { first: string; rest: string }
+export type Gutter = { first: string; rest: string; side: 'left' | 'right' }
 
 /**
  * Builds the drawn tree: one Text per visual line inside a column Box, and a
@@ -34,9 +38,12 @@ export type Gutter = { first: string; rest: string }
  */
 export function treeOf(lines: RenderLine[], t: DrawTable, gutter?: Gutter): RenderElement {
   const children: RenderElement[] = []
-  const lead = (): string => {
-    if (!gutter) return ''
-    return children.length === 0 ? gutter.first : gutter.rest
+
+  /** Puts the marker on the edge the reading direction starts from. */
+  const withGutter = (text: string): string => {
+    if (!gutter) return text
+    const mark = children.length === 0 ? gutter.first : gutter.rest
+    return gutter.side === 'right' ? text + mark : mark + text
   }
 
   for (const line of lines) {
@@ -53,7 +60,7 @@ export function treeOf(lines: RenderLine[], t: DrawTable, gutter?: Gutter): Rend
       // Too long for Code: fall back to plain rows rather than losing it.
       for (const row of line.source.split('\n')) {
         children.push(
-          t.Text({ wrap: 'truncate-end', children: [lead() + (row === '' ? ' ' : row)] }),
+          t.Text({ wrap: 'truncate-end', children: [withGutter(row === '' ? ' ' : row)] }),
         )
       }
       continue
@@ -61,7 +68,7 @@ export function treeOf(lines: RenderLine[], t: DrawTable, gutter?: Gutter): Rend
 
     // An empty Text can collapse the row, so a blank line draws one space.
     children.push(
-      t.Text({ wrap: 'truncate-end', children: [lead() + (line.text === '' ? ' ' : line.text)] }),
+      t.Text({ wrap: 'truncate-end', children: [withGutter(line.text === '' ? ' ' : line.text)] }),
     )
   }
 

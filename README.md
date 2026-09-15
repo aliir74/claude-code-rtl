@@ -14,6 +14,10 @@ after            .ﺖﺴﺗ ﯼﺍﺮﺑ ﺖﺳﺍ ﯽﻧﻻﻮﻃ ﯽﺳﺭﺎ�
 ## Requirements
 
 - `fribidi` on PATH: `brew install fribidi`
+- A terminal font covering the Arabic Presentation Forms block (U+FB50-U+FEFF),
+  which is what this mod emits. Vazir Code Hack is missing U+FEFC, the lam-alef
+  ligature in سلام and any لا, so pair it with Vazirmatn in your Ghostty config:
+  `font-family = "Vazirmatn"` listed after it.
 - Claude Code with function hooks enabled: `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`
 
 ## Install
@@ -27,7 +31,7 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir /path/to/claude-mod-bidi
 | Component | Shaped |
 |---|---|
 | `AssistantMessage` | yes, as markdown |
-| `UserMessage` | yes, as markdown |
+| `UserMessage` | yes, as markdown, handed back to the engine so it keeps its background band |
 | `CommandOutput` | yes, as plain text |
 | `ToolResult` (Bash only) | yes, as plain text |
 
@@ -53,7 +57,7 @@ degrades rather than failing the load.
 | `margin` | `4` | Cells held back from `viewport.columns` before wrapping. Keep it at 1 or more: it is the slack that stops `wrap: 'truncate-end'` clipping the start of a right-aligned line if the cell measure is ever off by one |
 | `cacheSize` | `256` | Shaped messages kept in the LRU |
 | `timeoutMs` | `2000` | How long a `fribidi` call may take before the row falls back to the engine's own drawing |
-| `replyBullet` | `⏺` | Marker on the opening line of a reply. Drawing our own tree replaces the engine's whole row, marker included, so the mod redraws it; an empty string leaves it off |
+| `replyBullet` | `⏺` | Marker on the opening line of a reply. Drawing our own tree replaces the engine's whole row, marker included, so the mod redraws it, on the right edge for RTL where the sentence starts; an empty string leaves it off |
 
 ## How it works
 
