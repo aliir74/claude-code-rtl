@@ -15,9 +15,21 @@ after            .ﺖﺴﺗ ﯼﺍﺮﺑ ﺖﺳﺍ ﯽﻧﻻﻮﻃ ﯽﺳﺭﺎ�
 
 - `fribidi` on PATH: `brew install fribidi`
 - A terminal font covering the Arabic Presentation Forms block (U+FB50-U+FEFF),
-  which is what this mod emits. Vazir Code Hack is missing U+FEFC, the lam-alef
-  ligature in سلام and any لا, so pair it with Vazirmatn in your Ghostty config:
-  `font-family = "Vazirmatn"` listed after it.
+  which is what this mod emits. A monospace Persian face is the right choice:
+  its joined forms are drawn to meet at the cell edges, where a proportional
+  face forced into cells pulls the letters of a word apart.
+
+  Vazir Code Hack works, with one gap that matters: it has no U+FEF5-U+FEFC,
+  the eight lam-alef ligature forms (the لا in سلام). Fill just those:
+
+  ```
+  font-family = "JetBrains Mono"
+  font-family = "Vazir Code Hack"
+  font-codepoint-map = U+FEF5-U+FEFC=Vazirmatn
+  ```
+
+  Do NOT add a proportional face like Vazirmatn as a plain `font-family`
+  fallback: it wins Latin glyphs too and spoils the English text.
 - Claude Code with function hooks enabled: `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`
 
 ## Install
