@@ -4,12 +4,15 @@ import { cellWidth } from '../hooks/cell-width'
 import type { Shaper } from '../hooks/transform'
 import { transformText } from '../hooks/transform'
 
+const OPEN = String.fromCharCode(0xe000)
+const CLOSE = String.fromCharCode(0xe001)
+
 // Models what real fribidi does: the line is reordered, but each protected
 // placeholder run keeps its own code points adjacent and in order (measured
 // against the real binary). A naive code-point reverse would flip the
 // placeholder's own delimiters, which fribidi never does.
 const reverse = (s: string): string => {
-  const units = s.match(/[a-z]+|[\s\S]/g) ?? []
+  const units = s.match(new RegExp(OPEN + '[a-z]+' + CLOSE + '|[\\s\\S]', 'g')) ?? []
   return units.reverse().join('')
 }
 

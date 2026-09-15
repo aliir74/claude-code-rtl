@@ -113,8 +113,8 @@ export type ProtectedBody = { text: string; tokens: string[] }
 /** Inline code spans and bare URLs: text fribidi must never see. */
 const TOKEN = /(`[^`\n]+`)|(https?:\/\/[^\s<>()\]]+)/g
 
-const OPEN = ''
-const CLOSE = ''
+const OPEN = String.fromCharCode(0xe000)
+const CLOSE = String.fromCharCode(0xe001)
 
 /** Encodes an index as a..z, aa..az, ba.. so a placeholder carries its own id. */
 const letters = (index: number): string => {
@@ -146,7 +146,7 @@ export function protectTokens(body: string): ProtectedBody {
   return { text, tokens }
 }
 
-const PLACEHOLDER = /([a-z]+)/g
+const PLACEHOLDER = new RegExp(OPEN + '([a-z]+)' + CLOSE, 'g')
 
 const indexOfLetters = (code: string): number => {
   let n = 0
