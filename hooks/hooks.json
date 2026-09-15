@@ -1,0 +1,4 @@
+{
+  "description": "RTL shaping of AssistantMessage, UserMessage, CommandOutput and Bash ToolResult rows via fribidi",
+  "modules": ["./register.ts"]
+}
