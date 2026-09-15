@@ -53,6 +53,7 @@ degrades rather than failing the load.
 | `margin` | `4` | Cells held back from `viewport.columns` before wrapping. Keep it at 1 or more: it is the slack that stops `wrap: 'truncate-end'` clipping the start of a right-aligned line if the cell measure is ever off by one |
 | `cacheSize` | `256` | Shaped messages kept in the LRU |
 | `timeoutMs` | `2000` | How long a `fribidi` call may take before the row falls back to the engine's own drawing |
+| `replyBullet` | `⏺` | Marker on the opening line of a reply. Drawing our own tree replaces the engine's whole row, marker included, so the mod redraws it; an empty string leaves it off |
 
 ## How it works
 
@@ -122,7 +123,9 @@ globs the whole plugin directory and would refuse a module importing `node:child
 
 ## Status
 
-Phases 1 to 4 of the build are done and verified automatically. The interactive smoke test in a
-real Ghostty window is the one step that cannot be automated: `ui.render` needs an interactive
-surface, and `claude -p` never fires it. Until that has been run, "it draws correctly in Ghostty"
-is unverified, however green the test suites are.
+Working, confirmed in Ghostty 1.3.2 on Claude Code 2.1.273. Persian renders joined, right-to-left
+and flush right, Latin runs inside a Persian sentence keep their own direction, and code blocks
+pass through.
+
+The smoke test turned up one regression, now fixed: returning our own tree replaced the engine's
+row and took the reply bullet with it, so replies ran together. The mod draws that marker itself.
