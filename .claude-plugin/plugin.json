@@ -40,6 +40,12 @@
       "type": "number",
       "description": "Milliseconds a fribidi call may take before it is killed and the row falls back to the engine's own drawing",
       "default": 2000
+    },
+    "replyBullet": {
+      "title": "Reply bullet",
+      "type": "string",
+      "description": "Marker drawn on the opening line of a reply, replacing the one the engine draws; empty string for none",
+      "default": "⏺"
     }
   }
 }

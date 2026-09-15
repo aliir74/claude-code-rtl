@@ -10,6 +10,8 @@ export type Settings = {
   margin: number
   cacheSize: number
   timeoutMs: number
+  /** Marker drawn on the opening line of a reply; an empty string disables it. */
+  replyBullet: string
 }
 
 const DEFAULTS: Settings = {
@@ -18,6 +20,7 @@ const DEFAULTS: Settings = {
   margin: 4,
   cacheSize: 256,
   timeoutMs: 2000,
+  replyBullet: String.fromCodePoint(0x23fa),
 }
 
 const ALIGNMENTS: readonly Alignment[] = ['auto', 'left', 'right']
@@ -34,6 +37,7 @@ const clamped = (value: unknown, min: number, max: number, fallback: number): nu
 export function settingsOf(options: PluginOptions): Settings {
   const alignment = options['alignment']
   const path = options['fribidiPath']
+  const bullet = options['replyBullet']
 
   return {
     alignment: ALIGNMENTS.includes(alignment as Alignment)
@@ -43,5 +47,6 @@ export function settingsOf(options: PluginOptions): Settings {
     margin: clamped(options['margin'], 0, 64, DEFAULTS.margin),
     cacheSize: clamped(options['cacheSize'], 1, 4096, DEFAULTS.cacheSize),
     timeoutMs: clamped(options['timeoutMs'], 200, 10000, DEFAULTS.timeoutMs),
+    replyBullet: typeof bullet === 'string' ? bullet : DEFAULTS.replyBullet,
   }
 }

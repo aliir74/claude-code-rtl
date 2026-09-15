@@ -15,6 +15,16 @@ export type DrawTable = Pick<Elements['terminal'], 'Box' | 'Text' | 'Code'>
 const CODE_CAP = 10000
 
 /**
+ * The marker column drawn to the left of a reply.
+ *
+ * Returning our own tree replaces the engine's whole row, bullet included, so
+ * a reply loses the marker that separates it from the one before unless we
+ * draw it ourselves. `first` goes on the opening line, `rest` keeps every
+ * later line aligned under it, so both must be the same cell width.
+ */
+export type Gutter = { first: string; rest: string }
+
+/**
  * Builds the drawn tree: one Text per visual line inside a column Box, and a
  * Code element for each passed-through code block.
  *
@@ -22,8 +32,12 @@ const CODE_CAP = 10000
  * should never fire; it is there so that a cell-width disagreement clips one
  * line rather than reflowing the whole paragraph and undoing the bidi order.
  */
-export function treeOf(lines: RenderLine[], t: DrawTable): RenderElement {
+export function treeOf(lines: RenderLine[], t: DrawTable, gutter?: Gutter): RenderElement {
   const children: RenderElement[] = []
+  const lead = (): string => {
+    if (!gutter) return ''
+    return children.length === 0 ? gutter.first : gutter.rest
+  }
 
   for (const line of lines) {
     if (line.kind === 'code') {
@@ -38,14 +52,16 @@ export function treeOf(lines: RenderLine[], t: DrawTable): RenderElement {
 
       // Too long for Code: fall back to plain rows rather than losing it.
       for (const row of line.source.split('\n')) {
-        children.push(t.Text({ wrap: 'truncate-end', children: [row === '' ? ' ' : row] }))
+        children.push(
+          t.Text({ wrap: 'truncate-end', children: [lead() + (row === '' ? ' ' : row)] }),
+        )
       }
       continue
     }
 
     // An empty Text can collapse the row, so a blank line draws one space.
     children.push(
-      t.Text({ wrap: 'truncate-end', children: [line.text === '' ? ' ' : line.text] }),
+      t.Text({ wrap: 'truncate-end', children: [lead() + (line.text === '' ? ' ' : line.text)] }),
     )
   }
 

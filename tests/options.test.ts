@@ -10,6 +10,7 @@ describe('options', () => {
       margin: 4,
       cacheSize: 256,
       timeoutMs: 2000,
+      replyBullet: String.fromCodePoint(0x23fa),
     })
   })
 
@@ -29,6 +30,11 @@ describe('options', () => {
 
   test('a non-numeric cacheSize falls back to the default', () => {
     expect(settingsOf({ cacheSize: 'x' }).cacheSize).toBe(256)
+  })
+
+  test('a custom reply bullet is taken as given, including empty', () => {
+    expect(settingsOf({ replyBullet: '>' }).replyBullet).toBe('>')
+    expect(settingsOf({ replyBullet: '' }).replyBullet).toBe('')
   })
 
   test('an over-large timeoutMs clamps to the ceiling', () => {

@@ -81,6 +81,22 @@ describe('render-tree', () => {
     expect(asAny(asAny(tree['children'])[0])['type']).toBe('Text')
   })
 
+  test('a gutter marks the first line and indents the rest', () => {
+    const tree = asAny(
+      treeOf(
+        [
+          { kind: 'text', text: 'alpha' },
+          { kind: 'text', text: 'beta' },
+        ],
+        fakeTable(),
+        { first: 'B ', rest: '  ' },
+      ),
+    )
+    const rows = tree['children'] as unknown as Record<string, unknown>[]
+    expect((rows[0]?.['children'] as string[])[0]).toBe('B alpha')
+    expect((rows[1]?.['children'] as string[])[0]).toBe('  beta')
+  })
+
   test('every Text prop is in the allowlist', () => {
     const tree = asAny(
       treeOf([{ kind: 'text', text: 'a' }, { kind: 'text', text: '' }], fakeTable()),

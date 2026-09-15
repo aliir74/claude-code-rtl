@@ -8,10 +8,12 @@ import type {
   RenderInput,
 } from 'claude-code'
 
+import { cellWidth } from './cell-width'
 import { fribidiArgv, packStdin, unpackStdout } from './fribidi-args'
 import { LruCache } from './lru-cache'
 import type { Settings } from './options'
 import { settingsOf } from './options'
+import type { Gutter } from './render-tree'
 import { treeOf } from './render-tree'
 import type { RenderLine, Shaper } from './transform'
 import { transformText } from './transform'
@@ -108,8 +110,10 @@ async function render(
   columns: number,
   text: string,
   markdown: boolean,
+  gutter?: Gutter,
 ): Promise<RenderElement | null> {
-  const width = Math.max(1, columns - ctx.settings.margin)
+  const lead = gutter ? cellWidth(gutter.first) : 0
+  const width = Math.max(1, columns - ctx.settings.margin - lead)
   const key = [String(markdown), String(width), text].join(KEY_SEPARATOR)
 
   let lines = ctx.cache.get(key)
@@ -127,7 +131,7 @@ async function render(
 
   const t = await $.ui.resolve(e)
 
-  return treeOf(lines, t)
+  return treeOf(lines, t, gutter)
 }
 
 /**
@@ -142,13 +146,30 @@ async function draw(
   next: Next,
   text: string,
   markdown: boolean,
+  gutter?: Gutter,
 ): Promise<RenderElement> {
   if (ctx.disabled || e.surface !== 'terminal' || !e.viewport) return next(e)
   if (!(await (ctx.probed ??= probe($, ctx)))) return next(e)
 
-  const tree = await render($, ctx, e, e.viewport.columns, text, markdown)
+  const tree = await render($, ctx, e, e.viewport.columns, text, markdown, gutter)
 
   return tree ?? next(e)
+}
+
+/**
+ * The reply marker, drawn only on the block that opens a reply.
+ *
+ * Confirmed by the interactive smoke test: returning an own tree replaces the
+ * engine's entire row, so the marker it used to draw disappears and successive
+ * replies run together. Set `replyBullet` to an empty string to turn it off.
+ */
+function gutterFor(settings: Settings, isFirstOfReply: boolean): Gutter | undefined {
+  if (settings.replyBullet === '') return undefined
+
+  const first = isFirstOfReply ? settings.replyBullet + ' ' : ''
+  const width = cellWidth(settings.replyBullet + ' ')
+
+  return { first: first === '' ? ' '.repeat(width) : first, rest: ' '.repeat(width) }
 }
 
 export function register(on: On, options: PluginOptions): void {
@@ -163,7 +184,15 @@ export function register(on: On, options: PluginOptions): void {
   }
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) =>
-    draw($, ctx, e as TerminalRender, next as Next, e.props.text, true),
+    draw(
+      $,
+      ctx,
+      e as TerminalRender,
+      next as Next,
+      e.props.text,
+      true,
+      gutterFor(ctx.settings, e.props.isFirstOfReply),
+    ),
   ).catch(($, e, next) => next(e))
 
   on('ui.render', { component: 'UserMessage' }, async ($, e, next) =>
