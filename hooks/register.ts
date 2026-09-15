@@ -48,7 +48,28 @@ type Context = {
   logged: Set<string>
   disabled: boolean
   probed: Promise<boolean> | null
+  /** The fribidi the probe actually got a version out of. */
+  resolved: string
+  /** How many times the probe has come back empty-handed. */
+  attempts: number
 }
+
+/** Failed probes tolerated before shaping is switched off for the session. */
+const MAX_PROBE_ATTEMPTS = 3
+
+/**
+ * Where to look for fribidi when the configured name is not runnable.
+ *
+ * Measured: a hooks worker DOES resolve a bare `fribidi` off PATH, so this is
+ * insurance rather than the fix for any known failure. It costs one extra
+ * spawn only on a machine where the bare name misses.
+ */
+const FRIBIDI_PATHS: readonly string[] = [
+  '/opt/homebrew/bin/fribidi',
+  '/usr/local/bin/fribidi',
+  '/usr/bin/fribidi',
+  '/opt/local/bin/fribidi',
+]
 
 /**
  * Logs a line once and only once.
@@ -60,14 +81,14 @@ type Context = {
 function note($: EngineInterface, ctx: Context, msg: string): void {
   if (ctx.logged.has(msg)) return
   ctx.logged.add(msg)
-  $.ui.log('bidi: ' + msg)
+  $.ui.log(msg)
 }
 
 /** Runs one fribidi call per batch of lines sharing a base direction. */
 function shaperOf($: EngineInterface, ctx: Context): Shaper {
   return async (lines, dir) => {
     const { exitCode, stdout, stderr } = await $.process.run(
-      fribidiArgv(dir, ctx.settings.fribidiPath),
+      fribidiArgv(dir, ctx.resolved),
       { stdin: packStdin(lines), timeoutMs: ctx.settings.timeoutMs },
     )
     if (exitCode !== 0) throw new Error(stderr)
@@ -79,19 +100,52 @@ function shaperOf($: EngineInterface, ctx: Context): Shaper {
   }
 }
 
-/** One-shot check that fribidi can actually run; failure disables the mod. */
+/**
+ * Looks for a runnable fribidi, reporting why each candidate failed.
+ *
+ * The configured name is tried first, then the usual install prefixes. A
+ * failure is NOT final: the caller clears the memo so the next render tries
+ * again, and only after MAX_PROBE_ATTEMPTS is shaping switched off for the
+ * session. The reported reason matters — a missing binary, a refused call and
+ * a timeout all used to surface as the same unhelpful "not runnable".
+ */
 async function probe($: EngineInterface, ctx: Context): Promise<boolean> {
-  try {
-    const { exitCode } = await $.process.run([ctx.settings.fribidiPath, '--version'], {
-      timeoutMs: ctx.settings.timeoutMs,
-    })
-    if (exitCode === 0) return true
-  } catch {
-    // fall through to disabling
+  const seen = new Set<string>()
+  const candidates = [ctx.settings.fribidiPath, ...FRIBIDI_PATHS].filter(path => {
+    if (path === '' || seen.has(path)) return false
+    seen.add(path)
+    return true
+  })
+
+  const failures: string[] = []
+
+  for (const path of candidates) {
+    try {
+      const { exitCode, stderr } = await $.process.run([path, '--version'], {
+        timeoutMs: ctx.settings.timeoutMs,
+      })
+      if (exitCode === 0) {
+        ctx.resolved = path
+        return true
+      }
+      failures.push(path + ' exited ' + String(exitCode) + (stderr ? ': ' + stderr.trim() : ''))
+    } catch (err) {
+      // Carry the reason. A bare "not runnable" hides whether this was a
+      // missing binary, a refused call or a timeout, which are three
+      // different bugs.
+      failures.push(path + ' threw ' + (err instanceof Error ? err.message : String(err)))
+    }
   }
 
-  ctx.disabled = true
-  note($, ctx, 'fribidi not runnable at ' + ctx.settings.fribidiPath + '; RTL shaping disabled')
+  ctx.attempts += 1
+
+  // Do not latch on the first failure. The probe runs on the first render of
+  // the session, when a transient refusal would otherwise disable shaping for
+  // the whole session with no way back.
+  if (ctx.attempts >= MAX_PROBE_ATTEMPTS) {
+    ctx.disabled = true
+    note($, ctx, 'no runnable fribidi after ' + String(ctx.attempts) + ' tries: ' + failures.join('; '))
+  }
 
   return false
 }
@@ -150,7 +204,10 @@ async function draw(
   gutter?: Gutter,
 ): Promise<RenderElement> {
   if (ctx.disabled || e.surface !== 'terminal' || !e.viewport) return next(e)
-  if (!(await (ctx.probed ??= probe($, ctx)))) return next(e)
+  if (!(await (ctx.probed ??= probe($, ctx)))) {
+    if (!ctx.disabled) ctx.probed = null
+    return next(e)
+  }
 
   const tree = await render($, ctx, e, e.viewport.columns, text, markdown, gutter)
 
@@ -203,7 +260,10 @@ async function rewrite(
   markdown: boolean,
 ): Promise<RenderElement> {
   if (ctx.disabled || e.surface !== 'terminal' || !e.viewport) return next(e)
-  if (!(await (ctx.probed ??= probe($, ctx)))) return next(e)
+  if (!(await (ctx.probed ??= probe($, ctx)))) {
+    if (!ctx.disabled) ctx.probed = null
+    return next(e)
+  }
 
   // Extra slack beyond `margin`: the engine indents its own row, and a line
   // that overflows would be re-wrapped, which is what undoes the bidi order.
@@ -235,6 +295,8 @@ export function register(on: On, options: PluginOptions): void {
     logged: new Set<string>(),
     disabled: false,
     probed: null,
+    resolved: settings.fribidiPath,
+    attempts: 0,
   }
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) =>

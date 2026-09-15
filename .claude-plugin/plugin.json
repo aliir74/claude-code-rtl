@@ -1,6 +1,6 @@
 {
   "name": "bidi",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shapes and reorders Persian/Arabic/Hebrew text in the transcript through fribidi so Ghostty draws it joined, right-to-left and right-aligned.",
   "author": {
     "name": "Ali Irani"
