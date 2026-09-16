@@ -30,9 +30,11 @@ what this mod emits. Monospace matters: a proportional Persian face forced into 
 grid pulls the letters of a word apart, where a monospace face has its joined forms drawn to meet
 at the cell edges.
 
-[Vazir Code Hack](https://github.com/rastikerdar/vazir-font) works, with one gap that matters: it
-has no U+FEF5-U+FEFC, the eight lam-alef ligature forms (the لا in سلام). Fill just those. In
-Ghostty:
+[Vazir Code](https://github.com/rastikerdar/vazir-code-font) works (the "Vazir Code Hack" variant
+pairs it with Hack for the Latin glyphs). Note the project is discontinued, though the released
+fonts are fine. It has one gap that matters: no U+FEF5-U+FEFC, the eight lam-alef ligature forms
+(the لا in سلام). Fill just those from [Vazirmatn](https://github.com/rastikerdar/vazirmatn),
+which you will need installed as well. In Ghostty:
 
 ```
 font-family = "JetBrains Mono"
@@ -151,10 +153,14 @@ degrades rather than failing the load.
 engine's own row rather than breaking your transcript. Work down this list.
 
 ```bash
-fribidi --version                 # is the binary there?
-echo $CLAUDE_CODE_ENABLE_FUNCTION_HOOKS   # must be 1
-claude plugin list                # is bidi installed and enabled?
+fribidi --version                              # is the binary there?
+grep FUNCTION_HOOKS ~/.claude/settings.json    # is the gate set?
+claude plugin list                             # is bidi installed and enabled?
 ```
+
+If you exported the variable in your shell instead of putting it in `settings.json`, check it with
+`echo $CLAUDE_CODE_ENABLE_FUNCTION_HOOKS`. A `settings.json` entry will not show up there: it is
+set inside the Claude Code process, not in your shell.
 
 If fribidi is installed somewhere unusual, set `fribidiPath` to its absolute path.
 
