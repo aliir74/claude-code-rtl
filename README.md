@@ -1,4 +1,4 @@
-# bidi
+# rtl-text
 
 A [Claude Code](https://claude.com/claude-code) mod that makes Persian, Arabic and Hebrew
 readable in the terminal transcript.
@@ -6,6 +6,11 @@ readable in the terminal transcript.
 Most terminals have no UAX #9 bidi and no Arabic shaping, so Persian arrives reversed and with
 its letters unjoined. This mod hooks the transcript's render events, runs each line through
 `fribidi`, and draws the result: letters joined, order right-to-left, RTL paragraphs flush right.
+
+![Persian rendering correctly in Claude Code under Ghostty](docs/screenshot.png)
+
+> **Claude Code mods are off by default.** This one does nothing at all until you set
+> `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. See [Requirements](#requirements).
 
 It shapes what Claude Code prints. It cannot fix what you type into the prompt box; see
 [Limits](#limits).
@@ -19,7 +24,22 @@ brew install fribidi        # macOS
 apt install fribidi         # Debian/Ubuntu
 ```
 
-**2. Function hooks enabled.** Mods are gated behind an environment variable:
+**2. Function hooks enabled.** Mods are an opt-in Claude Code feature, gated behind an
+environment variable. Without it the plugin loads and silently does nothing, which is the single
+most common reason this mod appears not to work.
+
+The durable way is `~/.claude/settings.json`, which applies to every session however you start it:
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1"
+  }
+}
+```
+
+Or export it in your shell (`~/.zshrc`, `~/.bashrc`) if you only ever launch Claude Code from
+a terminal:
 
 ```bash
 export CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1
@@ -80,32 +100,25 @@ better than what this mod can offer, since it works on logical text and can hand
 ## Install
 
 ```bash
-claude plugin marketplace add aliir74/claude-mod-bidi
-claude plugin install bidi@claude-mod-bidi
+claude plugin marketplace add aliir74/claude-code-rtl
+claude plugin install rtl-text@claude-code-rtl
 ```
 
 Or run it straight from a clone, without installing:
 
 ```bash
-CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir /path/to/claude-mod-bidi
+CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir /path/to/claude-code-rtl
 ```
 
 Installing writes the `enabledPlugins` entry itself, at user scope, so it is on in every project.
 Later updates:
 
 ```bash
-claude plugin update bidi
+claude plugin update rtl-text
 ```
 
-To make the env var permanent for every session, put it in `~/.claude/settings.json`:
-
-```json
-{
-  "env": {
-    "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1"
-  }
-}
-```
+Remember requirement 2: without `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` the plugin installs
+successfully and then does nothing.
 
 ## What it covers
 
@@ -155,7 +168,7 @@ engine's own row rather than breaking your transcript. Work down this list.
 ```bash
 fribidi --version                              # is the binary there?
 grep FUNCTION_HOOKS ~/.claude/settings.json    # is the gate set?
-claude plugin list                             # is bidi installed and enabled?
+claude plugin list                             # is rtl-text installed and enabled?
 ```
 
 If you exported the variable in your shell instead of putting it in `settings.json`, check it with

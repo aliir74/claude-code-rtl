@@ -1,5 +1,5 @@
 {
-  "name": "claude-mod-bidi",
+  "name": "claude-code-rtl",
   "owner": {
     "name": "Ali Irani"
   },
@@ -9,7 +9,7 @@
   },
   "plugins": [
     {
-      "name": "bidi",
+      "name": "rtl-text",
       "source": "./",
       "description": "Shapes and reorders Persian, Arabic and Hebrew text in the transcript through fribidi so the terminal draws it joined, right-to-left and right-aligned.",
       "version": "0.3.0",

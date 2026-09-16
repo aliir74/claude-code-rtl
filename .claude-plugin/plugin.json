@@ -1,5 +1,5 @@
 {
-  "name": "bidi",
+  "name": "rtl-text",
   "version": "0.3.0",
   "description": "Shapes and reorders Persian, Arabic and Hebrew text in the transcript through fribidi so the terminal draws it joined, right-to-left and right-aligned.",
   "author": {
@@ -49,8 +49,8 @@
     }
   },
   "license": "MIT",
-  "homepage": "https://github.com/aliir74/claude-mod-bidi",
-  "repository": "https://github.com/aliir74/claude-mod-bidi",
+  "homepage": "https://github.com/aliir74/claude-code-rtl",
+  "repository": "https://github.com/aliir74/claude-code-rtl",
   "keywords": [
     "rtl",
     "bidi",
