@@ -7,7 +7,7 @@ Most terminals have no UAX #9 bidi and no Arabic shaping, so Persian arrives rev
 its letters unjoined. This mod hooks the transcript's render events, runs each line through
 `fribidi`, and draws the result: letters joined, order right-to-left, RTL paragraphs flush right.
 
-![Persian rendering correctly in Claude Code under Ghostty](docs/screenshot.png)
+![The same Persian exchange in Ghostty, before and after the mod](docs/before-after.png)
 
 > **Claude Code mods are early access and off by default.** This one does nothing at all until
 > you set `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` on a recent enough Claude Code.
