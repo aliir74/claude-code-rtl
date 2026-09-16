@@ -54,7 +54,7 @@ avoids a second subprocess. Prefer the regex; keep --basedir as the test oracle.
 
 ## The function-hooks runtime IS present in this build
 `strings` on the installed binary
-(/Users/aliirani/.local/share/claude/versions/2.1.272, Mach-O arm64, 200.9M):
+(~/.local/share/claude/versions/2.1.272, Mach-O arm64, 200.9M):
     CLAUDE_CODE_ENABLE_FUNCTION_HOOKS   5 hits
     functionHooks                     141 hits
     ui.render                          23 hits

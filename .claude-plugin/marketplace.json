@@ -1,18 +1,17 @@
 {
-  "name": "bidi-local",
-  "id": "bidi-local",
+  "name": "claude-mod-bidi",
   "owner": {
     "name": "Ali Irani"
   },
   "metadata": {
-    "description": "Local marketplace carrying the bidi mod, so it installs from this working copy rather than a remote.",
+    "description": "RTL text rendering for the Claude Code transcript.",
     "version": "0.3.0"
   },
   "plugins": [
     {
       "name": "bidi",
       "source": "./",
-      "description": "Shapes and reorders Persian/Arabic/Hebrew in the transcript through fribidi so Ghostty draws it joined, right-to-left and right-aligned.",
+      "description": "Shapes and reorders Persian, Arabic and Hebrew text in the transcript through fribidi so the terminal draws it joined, right-to-left and right-aligned.",
       "version": "0.3.0",
       "author": {
         "name": "Ali Irani"
@@ -21,9 +20,11 @@
         "rtl",
         "bidi",
         "persian",
+        "farsi",
         "arabic",
         "hebrew",
         "fribidi",
+        "terminal",
         "ghostty"
       ],
       "category": "workflow"

@@ -23,7 +23,7 @@ ui.render. 5.2 makes CODE EDITS conditional on what the executor "sees".
 FIX: retitle Phase 5 "Hand-off: manual smoke (Ali drives) + README". 5.1's only
 executor action is to print this block and stop:
     Run in a Ghostty window at least 100 columns wide:
-      cd /tmp && CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir /Users/aliirani/Downloads/Coding/claude-mod-bidi
+      cd /tmp && CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir ~/Downloads/Coding/claude-mod-bidi
     Prompt: این یک متن فارسی است برای تست. لطفاً همین جمله را دو بار تکرار کن و بعد بنویس: قیمت ۱۲۰ دلار است و the API returns JSON.
     Report: (a) letters joined and right-to-left? (b) RTL lines flush right?
             (c) is the ⏺ reply bullet still drawn? (d) grep -i bidi ~/.claude/debug/latest

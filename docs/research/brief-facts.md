@@ -6,12 +6,12 @@ in the Ghostty terminal transcript. Ghostty 1.3.2 has no UAX#9 bidi and no Arabi
 shaping, so Persian currently appears reversed and with unjoined letters.
 
 ## Project location
-/Users/aliirani/Downloads/Coding/claude-mod-bidi/   (does not exist yet; create it)
+~/Downloads/Coding/claude-mod-bidi/   (does not exist yet; create it)
 Git repo, branch `main` is fine to create; this is NOT the Obsidian vault, so normal
 feature-branch rules apply only if a PR is intended (it is not — no remote).
 
 ## Type contract (already downloaded, READ IT)
-/Users/aliirani/.claude/jobs/caea74f1/tmp/claude-code.d.ts   (10736 lines)
+~/.claude/jobs/caea74f1/tmp/claude-code.d.ts   (10736 lines)
 This is mods/types/claude-code.d.ts from github.com/anthropics/claude-code.
 
 ## Verified API facts
@@ -115,7 +115,7 @@ This is mods/types/claude-code.d.ts from github.com/anthropics/claude-code.
       The pure functions must therefore live in modules that do NOT import the
       engine, so the harness can load them without a running Claude Code.
   (c) a manual smoke step: `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude --plugin-dir
-      /Users/aliirani/Downloads/Coding/claude-mod-bidi` and eyeball a Persian reply
+      ~/Downloads/Coding/claude-mod-bidi` and eyeball a Persian reply
       in Ghostty. This may fail if the runtime has not shipped to 2.1.272 — the plan
       must treat that as an EXPECTED possible outcome with a documented fallback,
       not a blocker that invalidates the work.

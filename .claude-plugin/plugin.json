@@ -1,7 +1,7 @@
 {
   "name": "bidi",
   "version": "0.3.0",
-  "description": "Shapes and reorders Persian/Arabic/Hebrew text in the transcript through fribidi so Ghostty draws it joined, right-to-left and right-aligned.",
+  "description": "Shapes and reorders Persian, Arabic and Hebrew text in the transcript through fribidi so the terminal draws it joined, right-to-left and right-aligned.",
   "author": {
     "name": "Ali Irani"
   },
@@ -47,5 +47,19 @@
       "description": "Marker drawn on the opening line of a reply, replacing the one the engine draws; empty string for none",
       "default": "⏺"
     }
-  }
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/aliir74/claude-mod-bidi",
+  "repository": "https://github.com/aliir74/claude-mod-bidi",
+  "keywords": [
+    "rtl",
+    "bidi",
+    "persian",
+    "farsi",
+    "arabic",
+    "hebrew",
+    "fribidi",
+    "terminal",
+    "ghostty"
+  ]
 }

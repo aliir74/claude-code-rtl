@@ -38,7 +38,7 @@ them, so verify steps must NOT pipe before reading `$?`):
 The generated file is 10922 lines and its first line is
     // Written by Claude Code 2.1.272.
 versus the 10736-line 2.1.271 copy in the job tmp dir.
-=> Task 1.2 must RUN this, not `cp` from /Users/aliirani/.claude/jobs/... (which is
+=> Task 1.2 must RUN this, not `cp` from ~/.claude/jobs/... (which is
    deleted with the job). Verify with `head -1 .claude/types/claude-code.d.ts`.
 
 ## 3. `claude plugin test <dir>` EXISTS — it is simply hidden from `claude plugin --help`
