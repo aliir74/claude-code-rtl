@@ -9,8 +9,9 @@ its letters unjoined. This mod hooks the transcript's render events, runs each l
 
 ![Persian rendering correctly in Claude Code under Ghostty](docs/screenshot.png)
 
-> **Claude Code mods are off by default.** This one does nothing at all until you set
-> `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`. See [Requirements](#requirements).
+> **Claude Code mods are early access and off by default.** This one does nothing at all until
+> you set `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` on a recent enough Claude Code.
+> See [Requirements](#requirements).
 
 It shapes what Claude Code prints. It cannot fix what you type into the prompt box; see
 [Limits](#limits).
@@ -24,9 +25,25 @@ brew install fribidi        # macOS
 apt install fribidi         # Debian/Ubuntu
 ```
 
-**2. Function hooks enabled.** Mods are an opt-in Claude Code feature, gated behind an
-environment variable. Without it the plugin loads and silently does nothing, which is the single
-most common reason this mod appears not to work.
+**2. A Claude Code new enough to carry the function-hooks runtime.**
+
+```bash
+claude --version
+```
+
+Mods are an early-access feature. They are not in the public changelog and not in the official
+docs, so there is no published "available from" version to point at. What is known: 2.1.260 is the
+earliest build [reported](https://claudefa.st/blog/tools/hooks/function-hooks) to carry the
+runtime, and this mod is tested on 2.1.271 through 2.1.273. If you are on something older and the
+mod does nothing, update before debugging anything else.
+
+Because the feature is early access, the plugin API can change between releases without notice, so
+a Claude Code update may break this mod until it is rebuilt. That warning is Anthropic's own, from
+the generated type declarations.
+
+**3. Function hooks switched on.** The feature is gated behind an environment variable even on a
+build that has it. Without it the plugin installs, loads and silently does nothing, which is the
+single most common reason this mod appears not to work.
 
 The durable way is `~/.claude/settings.json`, which applies to every session however you start it:
 
@@ -45,7 +62,7 @@ a terminal:
 export CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1
 ```
 
-**3. A monospace font covering the Arabic Presentation Forms block (U+FB50-U+FEFF)**, which is
+**4. A monospace font covering the Arabic Presentation Forms block (U+FB50-U+FEFF)**, which is
 what this mod emits. Monospace matters: a proportional Persian face forced into a terminal's cell
 grid pulls the letters of a word apart, where a monospace face has its joined forms drawn to meet
 at the cell edges.
@@ -117,7 +134,7 @@ Later updates:
 claude plugin update rtl-text
 ```
 
-Remember requirement 2: without `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` the plugin installs
+Remember requirement 3: without `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` the plugin installs
 successfully and then does nothing.
 
 ## What it covers
@@ -181,7 +198,7 @@ If fribidi is installed somewhere unusual, set `fribidiPath` to its absolute pat
 the first render and prints why each candidate failed. The message names the real reason, which is
 usually a path problem.
 
-**Letters are joined but gappy.** That is the font, not the mod. See requirement 3 above: you are
+**Letters are joined but gappy.** That is the font, not the mod. See requirement 4 above: you are
 almost certainly rendering with a proportional face.
 
 **Persian text is reversed.** Your terminal probably has its own bidi, and it is undoing the mod's
