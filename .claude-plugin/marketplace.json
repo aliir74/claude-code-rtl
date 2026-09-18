@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "RTL text rendering for the Claude Code transcript.",
-    "version": "0.3.0"
+    "version": "0.3.1"
   },
   "plugins": [
     {
       "name": "rtl-text",
       "source": "./",
       "description": "Shapes and reorders Persian, Arabic and Hebrew text in the transcript through fribidi so the terminal draws it joined, right-to-left and right-aligned.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": {
         "name": "Ali Irani"
       },
