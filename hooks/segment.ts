@@ -113,14 +113,20 @@ export type ProtectedBody = { text: string; tokens: string[] }
 /**
  * Runs fribidi must never see.
  *
- * Inline code and URLs have to come back byte-identical. Emphasis spans are
- * here for a different reason: `*` and `_` are neutral characters, so bidi
- * moves each marker independently of the words it wraps and a reply comes out
- * with stray `**` at the wrong ends. Protecting the whole span keeps every
- * marker attached to its own text.
+ * Inline code and URLs are opaque: they have to come back byte-identical, so
+ * the whole run is lifted out and never looked inside again.
+ *
+ * Emphasis is a different problem. `*` and `_` are neutral characters, so
+ * bidi floats each marker away from the words it wraps and a reply comes back
+ * with stray `**` at the wrong ends. Only the MARKERS are lifted out: a
+ * placeholder is made of letters, which is bidi class L, so it stays on its
+ * own edge of the span. The text between them has to stay in the line,
+ * because staying in the line is the only way it gets shaped at all. Lifting
+ * the whole span out instead leaves its Persian in logical order and the
+ * terminal then prints that run backwards.
  */
 const TOKEN =
-  /(`[^`\n]+`)|(https?:\/\/[^\s<>()\]]+)|(\*\*[^*\n]+\*\*)|(__[^_\n]+__)|(\*[^*\n]+\*)/g
+  '(`[^`\\n]+`)|(https?://[^\\s<>()\\]]+)|(\\*\\*)([^*\\n]+)(\\*\\*)|(__)([^_\\n]+)(__)|(\\*)([^*\\n]+)(\\*)'
 
 const OPEN = String.fromCharCode(0xe000)
 const CLOSE = String.fromCharCode(0xe001)
@@ -136,23 +142,48 @@ const letters = (index: number): string => {
   return out
 }
 
+/** Lifts one run out and returns the placeholder that stands in for it. */
+const lift = (tokens: string[], run: string): string => {
+  const placeholder = OPEN + letters(tokens.length) + CLOSE
+  tokens.push(run)
+  return placeholder
+}
+
 /**
- * Replaces inline code and URLs with private-use placeholders. The
- * placeholders are letters, so the bidi algorithm treats them as a plain LTR
- * run and keeps each one's code points adjacent and in order; the index is
+ * One pass over a body, recursing into what an emphasis span wraps.
+ *
+ * The regex is rebuilt per call on purpose: a global regex carries its own
+ * `lastIndex`, and a nested `replace` with the shared object would reset the
+ * position the outer pass is walking.
+ */
+const protect = (body: string, tokens: string[]): string =>
+  body.replace(new RegExp(TOKEN, 'g'), (match, ...groups: (string | undefined)[]) => {
+    // An opaque run: inline code, then URL.
+    if (groups[0] !== undefined || groups[1] !== undefined) return lift(tokens, match)
+
+    // The three emphasis alternatives, each an (open, inner, close) triple.
+    for (let at = 2; at + 2 < groups.length; at += 3) {
+      const open = groups[at]
+      const inner = groups[at + 1]
+      const close = groups[at + 2]
+      if (open === undefined || inner === undefined || close === undefined) continue
+      return lift(tokens, open) + protect(inner, tokens) + lift(tokens, close)
+    }
+
+    return match
+  })
+
+/**
+ * Replaces the runs fribidi must not reorder with private-use placeholders.
+ * The placeholders are letters, so the bidi algorithm treats each one as a
+ * plain LTR run and keeps its code points adjacent and in order; the index is
  * encoded in the placeholder itself, so a run that bidi moves elsewhere in
  * the line still restores to the right token.
  */
 export function protectTokens(body: string): ProtectedBody {
   const tokens: string[] = []
 
-  const text = body.replace(TOKEN, match => {
-    const placeholder = OPEN + letters(tokens.length) + CLOSE
-    tokens.push(match)
-    return placeholder
-  })
-
-  return { text, tokens }
+  return { text: protect(body, tokens), tokens }
 }
 
 const PLACEHOLDER = new RegExp(OPEN + '([a-z]+)' + CLOSE, 'g')
