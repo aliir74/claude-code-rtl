@@ -99,3 +99,41 @@ test('a bullet marker stays at the line start', { skip: !available }, async () =
   assert.ok(first && first.kind === 'text')
   assert.ok(first.text.startsWith('- '), 'bullet was moved: ' + first.text)
 })
+
+/**
+ * The regression from the bug report: a bold heading was protected as one
+ * opaque token, so fribidi never saw its Persian and the terminal printed the
+ * line in logical order, i.e. backwards. The shaped inner run must be
+ * byte-identical to shaping that run on its own.
+ */
+const shapedSpan = async (inner: string, dir: 'rtl' | 'ltr'): Promise<string> => {
+  const [only] = await realShaper([inner], dir)
+  return only as string
+}
+
+const boldLine = async (inner: string): Promise<string> => {
+  const out = await transformText(
+    '**' + inner + '**',
+    { columns: 120, alignment: 'left', markdown: true },
+    realShaper,
+  )
+  assert.ok(out)
+  const first = out[0]
+  assert.ok(first && first.kind === 'text')
+  return first.text.trimEnd()
+}
+
+test('a bold Persian heading is shaped inside its markers', { skip: !available }, async () => {
+  const inner = 'قانون کلی: وی هیچ‌وقت مستقیم'
+  const line = await boldLine(inner)
+  assert.ok(line.startsWith('**') && line.endsWith('**'), 'markers moved: ' + line)
+  assert.equal(line.slice(2, -2), await shapedSpan(inner, 'rtl'))
+})
+
+test('a bold heading with an ltr base is shaped too', { skip: !available }, async () => {
+  // First strong letter is Latin, so baseDirection picks ltr for the line.
+  const inner = '۱. Overnight oats (برای روزهای اداری، شب قبل آماده)'
+  const line = await boldLine(inner)
+  assert.ok(line.startsWith('**') && line.endsWith('**'), 'markers moved: ' + line)
+  assert.equal(line.slice(2, -2), await shapedSpan(inner, 'ltr'))
+})

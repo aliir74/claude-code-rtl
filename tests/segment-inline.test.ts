@@ -50,6 +50,40 @@ describe('segment-inline', () => {
     expect(restoreTokens(swapped, tokens)).toBe('`two` و `one`')
   })
 
+  test('a bold span protects only its markers', () => {
+    const { text, tokens } = protectTokens('**متن پررنگ**')
+    expect(tokens).toEqual(['**', '**'])
+    expect(text).toBe(OPEN + 'a' + CLOSE + 'متن پررنگ' + OPEN + 'b' + CLOSE)
+  })
+
+  test('an italic span protects only its markers', () => {
+    expect(protectTokens('*متن*').tokens).toEqual(['*', '*'])
+  })
+
+  test('an underscore span protects only its markers', () => {
+    expect(protectTokens('__متن__').tokens).toEqual(['__', '__'])
+  })
+
+  test('a code span inside a bold span stays protected', () => {
+    const body = '**قیمت `getPrice()` را بگیر**'
+    const { text, tokens } = protectTokens(body)
+    expect(tokens).toEqual(['**', '`getPrice()`', '**'])
+    expect(text.includes('`')).toBe(false)
+    expect(restoreTokens(text, tokens)).toBe(body)
+  })
+
+  test('a URL inside a bold span stays protected', () => {
+    const body = '**برو به https://example.com/a?b=c**'
+    const { tokens } = protectTokens(body)
+    expect(tokens).toEqual(['**', 'https://example.com/a?b=c', '**'])
+  })
+
+  test('an emphasis body round trips', () => {
+    const body = 'یک **متن پررنگ** و یک *مورب*'
+    const { text, tokens } = protectTokens(body)
+    expect(restoreTokens(text, tokens)).toBe(body)
+  })
+
   test('a token index past z encodes in two letters', () => {
     const body = Array.from({ length: 27 }, (_, i) => '`t' + i + '`').join(' ')
     const { text, tokens } = protectTokens(body)
