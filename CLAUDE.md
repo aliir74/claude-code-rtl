@@ -9,8 +9,8 @@ working context for editing the code.
 Run all four before calling a change done. None of them covers another.
 
 ```bash
-CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test .      # 112 tests: hooks + pure logic, fribidi mocked
-npx --yes tsx --test harness/*.check.ts                       # 10 tests: the real fribidi binary
+CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin test .      # 118 tests: hooks + pure logic, fribidi mocked
+npx --yes tsx --test harness/*.check.ts                       # 12 tests: the real fribidi binary
 CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude plugin validate --strict .   # structure: hooks, matchers, $ calls
 npx --yes -p typescript@latest tsc -p tsconfig.json           # types
 ```
